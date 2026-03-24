@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giga Clicker WebApp</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #1a1a1a; color: white; margin: 0; padding: 0; text-align: center; user-select: none; }
+        .header { background: #2c2c2c; padding: 15px; display: flex; justify-content: space-around; font-size: 14px; border-bottom: 2px solid #444; }
+        .currency { display: flex; flex-direction: column; }
+        
+        .tab-content { display: none; padding: 20px; padding-bottom: 80px; }
+        .active { display: block; }
+
+        /* Кликер */
+        #click-circle { width: 200px; height: 200px; background: radial-gradient(#ffd700, #ff8c00); border-radius: 50%; margin: 50px auto; border: 10px solid #555; cursor: pointer; transition: transform 0.1s; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: 0 0 20px rgba(255,215,0,0.5); }
+        #click-circle:active { transform: scale(0.95); }
+
+        /* Магазин Кейсов */
+        .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .case-card { background: #333; padding: 15px; border-radius: 12px; border: 1px solid #555; }
+        .case-card button { background: #4caf50; color: white; border: none; padding: 8px; border-radius: 5px; width: 100%; margin-top: 10px; }
+
+        /* Нижнее меню */
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #2c2c2c; display: flex; justify-content: space-around; padding: 10px 0; border-top: 2px solid #444; }
+        .nav-item { cursor: pointer; font-size: 12px; }
+        .nav-item img { width: 24px; display: block; margin: 0 auto 5px; }
+
+        /* Анимация выпадения */
+        #drop-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #444; border: 3px solid #ffd700; padding: 30px; border-radius: 20px; z-index: 100; box-shadow: 0 0 50px black; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="currency"><span>💰 Монеты</span><b id="coins">0</b></div>
+    <div class="currency"><span>💎 Алмазы</span><b id="diamonds">0</b></div>
+    <div class="currency"><span>🌀 Плазма</span><b id="plasma">0</b></div>
+</div>
+
+<div id="tab-clicker" class="tab-content active">
+    <h2>Уровень: <span id="lvl">1</span></h2>
+    <div id="click-circle">🖱</div>
+    <p>Сила клика: <span id="power">1</span></p>
+</div>
+
+<div id="tab-shop" class="tab-content">
+    <h2>Магазин кейсов (25 шт)</h2>
+    <div class="case-grid" id="shop-items">
+        </div>
+</div>
+
+<div id="tab-profile" class="tab-content">
+    <h2>👤 Твой прогресс</h2>
+    <div style="text-align: left; background: #333; padding: 20px; border-radius: 15px;">
+        <p>📊 Всего кликов: <span id="stat-clicks">0</span></p>
+        <p>🐾 Питомцев: <span id="stat-pets">0</span></p>
+        <p>🤖 Автокликер: <span id="stat-auto">Выкл</span></p>
+    </div>
+</div>
+
+<div id="drop-modal">
+    <h3>🎉 ВАМ ВЫПАЛО:</h3>
+    <h1 id="drop-name">...</h1>
+    <button onclick="document.getElementById('drop-modal').style.display='none'">ЗАБРАТЬ</button>
+</div>
+
+<div class="navbar">
+    <div class="nav-item" onclick="openTab('clicker')">🔘<br>КЛИКЕР</div>
+    <div class="nav-item" onclick="openTab('shop')">🎁<br>КЕЙСЫ</div>
+    <div class="nav-item" onclick="openTab('profile')">👤<br>ИНФО</div>
+</div>
+
+<script>
+    let stats = { coins: 0, diamonds: 0, plasma: 0, power: 1, lvl: 1, pets: 0 };
+
+    // Функция клика
+    document.getElementById('click-circle').onclick = () => {
+        stats.coins += stats.power;
+        updateUI();
+        createParticle(); // Можно добавить эффект вылетающих цифр
+    };
+
+    function updateUI() {
+        document.getElementById('coins').innerText = stats.coins;
+        document.getElementById('diamonds').innerText = stats.diamonds;
+        document.getElementById('plasma').innerText = stats.plasma;
+        document.getElementById('lvl').innerText = stats.lvl;
+        document.getElementById('power').innerText = stats.power;
+        document.getElementById('stat-pets').innerText = stats.pets;
+    }
+
+    function openTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    // Генерация 25 кейсов
+    const shopItems = document.getElementById('shop-items');
+    for(let i=1; i<=25; i++) {
+        let price = i * 100;
+        let card = document.createElement('div');
+        card.className = 'case-card';
+        card.innerHTML = `
+            <b>Кейс №${i}</b><br>
+            <small>Цена: ${price} 💰</small>
+            <button onclick="buyCase(${price}, ${i})">ОТКРЫТЬ</button>
+        `;
+        shopItems.appendChild(card);
+    }
+
+    function buyCase(price, id) {
+        if(stats.coins >= price) {
+            stats.coins -= price;
+            openCase(id);
+            updateUI();
+        } else {
+            alert("Недостаточно монет!");
+        }
+    }
+
+    function openCase(id) {
+        const modal = document.getElementById('drop-modal');
+        const dropText = document.getElementById('drop-name');
+        
+        let luck = Math.random();
+        let prize = "";
+
+        if(luck < 0.1) {
+            stats.diamonds += 1;
+            prize = "1 Алмаз! 💎";
+        } else if (luck < 0.3) {
+            stats.power += 2;
+            prize = "+2 к Силе! ⚡";
+        } else {
+            stats.coins += Math.floor(price * 1.5);
+            prize = "Кешбэк монет!";
+        }
+
+        dropText.innerText = prize;
+        modal.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
+
