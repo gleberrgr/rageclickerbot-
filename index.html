@@ -3,124 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rage Clicker v3</title>
+    <title>Rage Clicker Ultimate</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #0b0b0e; --card: #1c1c24; --accent: #00d4ff; --gold: #ffcc00; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        :root { --bg: #0d0d12; --panel: #1a1a22; --accent: #00f2ff; --gold: #ffcc00; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         
-        /* Фиксированная шапка */
-        .header { display: flex; justify-content: space-around; padding: 15px; background: #16161d; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100; }
-        .stat { text-align: center; }
-        .stat b { display: block; color: var(--accent); font-size: 18px; }
+        .header { display: flex; justify-content: space-around; padding: 15px; background: var(--panel); border-bottom: 2px solid #333; position: sticky; top: 0; z-index: 10; }
+        .stat { text-align: center; font-size: 14px; }
+        .stat b { display: block; color: var(--accent); font-size: 20px; }
 
-        .tab-content { display: none; padding: 20px; padding-bottom: 100px; min-height: 80vh; }
-        .active { display: block; }
+        .content { padding: 20px; padding-bottom: 100px; display: none; }
+        .content.active { display: block; }
 
-        /* Кликер */
-        .click-area { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 50px; }
-        #coin { width: 180px; height: 180px; background: radial-gradient(circle, var(--gold), #ff8800); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 70px; border: 8px solid #333; cursor: pointer; transition: 0.05s; }
-        #coin:active { transform: scale(0.9); }
+        /* Главная: Клик */
+        .main-screen { text-align: center; padding-top: 40px; }
+        #big-button { width: 220px; height: 220px; background: radial-gradient(circle, #ffcc00, #ff8800); border-radius: 50%; border: 8px solid #333; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 80px; box-shadow: 0 0 30px rgba(255,204,0,0.4); cursor: pointer; transition: 0.05s; }
+        #big-button:active { transform: scale(0.92); }
 
-        /* Кейсы: Сделал сетку и красивые карточки */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .case-card { background: var(--card); padding: 15px; border-radius: 16px; border: 1px solid #333; text-align: center; }
-        .case-icon { font-size: 40px; margin-bottom: 8px; display: block; }
-        .case-title { font-weight: bold; font-size: 14px; display: block; margin-bottom: 4px; color: #eee; }
-        .case-price { color: var(--gold); font-size: 13px; font-weight: bold; }
-        .buy-btn { width: 100%; background: var(--accent); color: #000; border: none; padding: 10px; border-radius: 10px; margin-top: 10px; font-weight: bold; font-size: 12px; }
-        .buy-btn:active { background: #0099bb; }
+        /* Магазин: 25 кейсов */
+        .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card { background: var(--panel); padding: 15px; border-radius: 15px; border: 1px solid #444; text-align: center; }
+        .card i { font-style: normal; font-size: 40px; display: block; margin-bottom: 10px; }
+        .card button { width: 100%; background: var(--accent); color: black; border: none; padding: 10px; border-radius: 10px; font-weight: bold; margin-top: 10px; }
 
-        /* Навигация */
-        .nav { position: fixed; bottom: 0; width: 100%; background: #16161d; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #333; }
-        .nav-item { cursor: pointer; color: #666; font-size: 11px; text-align: center; transition: 0.2s; }
-        .nav-item.active-nav { color: var(--accent); }
+        /* Инвентарь и ТОП */
+        .item-row { background: var(--panel); padding: 12px; margin-bottom: 8px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); }
+
+        .navbar { position: fixed; bottom: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #333; }
+        .nav-btn { color: #888; font-size: 12px; cursor: pointer; text-align: center; font-weight: bold; }
+        .nav-btn.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="stat">ДЕНЬГИ<b id="bal">0</b></div>
-    <div class="stat">СИЛА<b id="str">1</b></div>
+    <div class="stat">ДЕНЬГИ<b id="money">0</b></div>
+    <div class="stat">СИЛА<b id="pwr">1</b></div>
 </div>
 
-<div id="t-click" class="tab-content active">
-    <div class="click-area">
-        <div id="coin">💰</div>
-        <p>Кликай на монету!</p>
+<div id="tab-click" class="content active">
+    <div class="main-screen">
+        <div id="big-button">💥</div>
+        <p>Нажимай на кнопку!</p>
     </div>
 </div>
 
-<div id="t-shop" class="tab-content">
-    <h3 style="text-align:center">Магазин (25 Кейсов)</h3>
-    <div class="grid" id="shop-grid"></div>
+<div id="tab-shop" class="content">
+    <h3 style="text-align:center">Магазин Кейсов</h3>
+    <div class="case-grid" id="shop-container"></div>
 </div>
 
-<div class="nav">
-    <div class="nav-item active-nav" onclick="tab('click', this)">🖱 КЛИК</div>
-    <div class="nav-item" onclick="tab('shop', this)">🎁 КЕЙСЫ</div>
+<div id="tab-inv" class="content">
+    <h3 style="text-align:center">Твои Вещи</h3>
+    <div id="inventory-container">Пусто</div>
+</div>
+
+<div id="tab-top" class="content">
+    <h3 style="text-align:center">Лидеры</h3>
+    <div id="top-container">
+        <div class="item-row"><span>1. Gleb (Ты)</span><b>0 💰</b></div>
+        <div class="item-row"><span>2. AlexBot</span><b>5000 💰</b></div>
+        <div class="item-row"><span>3. King</span><b>1200 💰</b></div>
+    </div>
+</div>
+
+<div class="navbar">
+    <div class="nav-btn active" onclick="showTab('click', this)">КЛИК</div>
+    <div class="nav-btn" onclick="showTab('shop', this)">КЕЙСЫ</div>
+    <div class="nav-btn" onclick="showTab('inv', this)">ВЕЩИ</div>
+    <div class="nav-btn" onclick="showTab('top', this)">ТОП</div>
 </div>
 
 <script>
     let tg = window.Telegram.WebApp;
     tg.expand();
 
-    let balance = 0;
-    let power = 1;
+    let state = { coins: 0, power: 1, inventory: [] };
 
-    // Массив с названиями и иконками для 25 кейсов
-    const caseData = [
-        {n: "Деревянный", i: "📦", p: 50}, {n: "Железный", i: "⚙️", p: 150},
-        {n: "Бронзовый", i: "🥉", p: 400}, {n: "Серебряный", i: "🥈", p: 1000},
-        {n: "Золотой", i: "🥇", p: 2500}, {n: "Алмазный", i: "💎", p: 5000},
-        {n: "Элитный", i: "👑", p: 10000}, {n: "Мифический", i: "🔮", p: 20000},
-        {n: "Легендарный", i: "🐲", p: 40000}, {n: "Космический", i: "🌌", p: 75000},
-        {n: "Плазменный", i: "🌀", p: 120000}, {n: "Радиационный", i: "☢️", p: 200000},
-        {n: "Кибер", i: "🤖", p: 350000}, {n: "Теневой", i: "🌑", p: 500000},
-        {n: "Солнечный", i: "☀️", p: 750000}, {n: "Звездный", i: "⭐", p: 1000000},
-        {n: "Драконий", i: "🦎", p: 1500000}, {n: "Демонический", i: "👿", p: 2500000},
-        {n: "Божественный", i: "😇", p: 5000000}, {n: "Магический", i: "✨", p: 8000000},
-        {n: "Кровавый", i: "🩸", p: 12000000}, {n: "Ледяной", i: "❄️", p: 20000000},
-        {n: "Огненный", i: "🔥", p: 35000000}, {n: "Призрачный", i: "👻", p: 60000000},
-        {n: "Rage Case", i: "👺", p: 100000000}
+    // Данные 25 кейсов
+    const cases = [
+        {n: "Дерево", p: 50, i: "📦"}, {n: "Металл", p: 200, i: "⚙️"}, {n: "Бронза", p: 500, i: "🥉"},
+        {n: "Серебро", p: 1200, i: "🥈"}, {n: "Золото", p: 3000, i: "🥇"}, {n: "Платина", p: 7000, i: "💎"},
+        {n: "Нефрит", p: 15000, i: "🎋"}, {n: "Сапфир", p: 30000, i: "🔹"}, {n: "Рубин", p: 60000, i: "🔻"},
+        {n: "Изумруд", p: 120000, i: "🟢"}, {n: "Аметист", p: 250000, i: "🟣"}, {n: "Титан", p: 500000, i: "🏗️"},
+        {n: "Метеорит", p: 1000000, i: "☄️"}, {n: "Звезда", p: 2500000, i: "⭐"}, {n: "Галактика", p: 6000000, i: "🌌"},
+        {n: "Квазар", p: 12000000, i: "🌀"}, {n: "Бездна", p: 25000000, i: "🕳️"}, {n: "Дракон", p: 50000000, i: "🐲"},
+        {n: "Адский", p: 100000000, i: "🔥"}, {n: "Райский", p: 200000000, i: "☁️"}, {n: "Бог", p: 500000000, i: "👁️"},
+        {n: "Мастер", p: 1000000000, i: "👺"}, {n: "Эфир", p: 2500000000, i: "🧪"}, {n: "Хаос", p: 6000000000, i: "🌑"},
+        {n: "RAGE", p: 15000000000, i: "⚡"}
     ];
 
-    // Генерируем карточки
-    const grid = document.getElementById('shop-grid');
-    caseData.forEach((c, index) => {
-        grid.innerHTML += `
-            <div class="case-card">
-                <span class="case-icon">${c.i}</span>
-                <span class="case-title">${c.n}</span>
-                <span class="case-price">${c.p} 💰</span>
-                <button class="buy-btn" onclick="buyCase(${c.p}, '${c.n}')">КУПИТЬ</button>
+    // Отрисовка магазина
+    const shopList = document.getElementById('shop-container');
+    cases.forEach((c) => {
+        shopList.innerHTML += `
+            <div class="card">
+                <i>${c.i}</i>
+                <b>${c.n}</b><br>
+                <small>${c.p} 💰</small>
+                <button onclick="buyCase(${c.p}, '${c.n}')">КУПИТЬ</button>
             </div>
         `;
     });
 
-    function tab(name, el) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
-        document.getElementById('t-' + name).classList.add('active');
-        el.classList.add('active-nav');
+    function showTab(id, el) {
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + id).classList.add('active');
+        el.classList.add('active');
+        if(id === 'inv') updateInv();
     }
 
-    document.getElementById('coin').onclick = () => {
-        balance += power;
-        document.getElementById('bal').innerText = balance;
-        tg.HapticFeedback.impactOccurred('light');
+    // Клик
+    document.getElementById('big-button').onclick = () => {
+        state.coins += state.power;
+        updateUI();
+        tg.HapticFeedback.impactOccurred('medium');
     };
 
     function buyCase(price, name) {
-        if (balance >= price) {
-            balance -= price;
-            document.getElementById('bal').innerText = balance;
-            tg.showAlert("Успешно! Вы открыли " + name + "!");
+        if(state.coins >= price) {
+            state.coins -= price;
+            state.inventory.push(name + " Item");
+            updateUI();
+            tg.showAlert("Открыт кейс: " + name + "!");
         } else {
-            tg.showAlert("Не хватает еще " + (price - balance) + " монет!");
+            tg.showAlert("Нужно еще " + (price - state.coins) + " монет!");
         }
+    }
+
+    function updateInv() {
+        const inv = document.getElementById('inventory-container');
+        inv.innerHTML = state.inventory.length ? "" : "Пусто";
+        state.inventory.forEach(item => {
+            inv.innerHTML += `<div class="item-row"><span>${item}</span></div>`;
+        });
+    }
+
+    function updateUI() {
+        document.getElementById('money').innerText = state.coins;
+        document.getElementById('pwr').innerText = state.power;
     }
 </script>
 </body>
 </html>
-
