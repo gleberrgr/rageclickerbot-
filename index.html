@@ -2,146 +2,200 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giga Clicker WebApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rage Clicker Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Arial', sans-serif; background: #1a1a1a; color: white; margin: 0; padding: 0; text-align: center; user-select: none; }
-        .header { background: #2c2c2c; padding: 15px; display: flex; justify-content: space-around; font-size: 14px; border-bottom: 2px solid #444; }
-        .currency { display: flex; flex-direction: column; }
+        :root { --main-bg: #0f0f13; --card-bg: #1e1e24; --accent: #ffcc00; --text: #ffffff; }
         
-        .tab-content { display: none; padding: 20px; padding-bottom: 80px; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--main-bg); color: var(--text); 
+            margin: 0; padding: 0; overflow: hidden; user-select: none;
+            -webkit-tap-highlight-color: transparent; /* Убирает синий квадрат */
+        }
+
+        /* Шапка с балансом */
+        .header { 
+            display: flex; justify-content: space-around; background: var(--card-bg); 
+            padding: 15px; border-bottom: 2px solid #333; font-weight: bold; font-size: 14px;
+        }
+        .stat-item { display: flex; flex-direction: column; align-items: center; }
+        .stat-item span { color: var(--accent); font-size: 18px; }
+
+        .tab-content { display: none; height: calc(100vh - 140px); overflow-y: auto; padding: 20px; }
         .active { display: block; }
 
         /* Кликер */
-        #click-circle { width: 200px; height: 200px; background: radial-gradient(#ffd700, #ff8c00); border-radius: 50%; margin: 50px auto; border: 10px solid #555; cursor: pointer; transition: transform 0.1s; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: 0 0 20px rgba(255,215,0,0.5); }
-        #click-circle:active { transform: scale(0.95); }
+        .clicker-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        #click-circle { 
+            width: 220px; height: 220px; 
+            background: radial-gradient(circle, #ffcc00 0%, #ff8800 100%); 
+            border-radius: 50%; border: 8px solid #333;
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 60px; transition: transform 0.05s; cursor: pointer;
+        }
+        #click-circle:active { transform: scale(0.92); }
 
-        /* Магазин Кейсов */
+        /* Анимация +1 */
+        .floating-text {
+            position: absolute; color: var(--accent); font-weight: bold;
+            font-size: 24px; pointer-events: none; animation: floatUp 0.6s ease-out forwards;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+
+        /* Кейсы */
         .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .case-card { background: #333; padding: 15px; border-radius: 12px; border: 1px solid #555; }
-        .case-card button { background: #4caf50; color: white; border: none; padding: 8px; border-radius: 5px; width: 100%; margin-top: 10px; }
+        .case-card { 
+            background: var(--card-bg); padding: 15px; border-radius: 15px; 
+            border: 1px solid #444; text-align: center; position: relative;
+        }
+        .case-img { font-size: 40px; margin-bottom: 10px; display: block; }
+        .case-card b { font-size: 16px; display: block; margin-bottom: 5px; }
+        .case-card button { 
+            background: var(--accent); border: none; padding: 8px 15px; 
+            border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px;
+        }
 
-        /* Нижнее меню */
-        .navbar { position: fixed; bottom: 0; width: 100%; background: #2c2c2c; display: flex; justify-content: space-around; padding: 10px 0; border-top: 2px solid #444; }
-        .nav-item { cursor: pointer; font-size: 12px; }
-        .nav-item img { width: 24px; display: block; margin: 0 auto 5px; }
+        /* ТОП Лидеров */
+        .top-list { background: var(--card-bg); border-radius: 15px; padding: 10px; }
+        .top-item { 
+            display: flex; justify-content: space-between; padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .top-item:last-child { border: none; }
+        .rank { color: var(--accent); font-weight: bold; margin-right: 10px; }
 
-        /* Анимация выпадения */
-        #drop-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #444; border: 3px solid #ffd700; padding: 30px; border-radius: 20px; z-index: 100; box-shadow: 0 0 50px black; }
+        /* Навигация */
+        .navbar { 
+            position: fixed; bottom: 0; width: 100%; background: var(--card-bg); 
+            display: flex; justify-content: space-around; padding: 15px 0;
+            border-top: 1px solid #333;
+        }
+        .nav-btn { color: #888; font-size: 12px; font-weight: bold; cursor: pointer; text-align: center; }
+        .nav-btn.active-nav { color: var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="currency"><span>💰 Монеты</span><b id="coins">0</b></div>
-    <div class="currency"><span>💎 Алмазы</span><b id="diamonds">0</b></div>
-    <div class="currency"><span>🌀 Плазма</span><b id="plasma">0</b></div>
+    <div class="stat-item">💰 МОНЕТЫ <span id="coins">0</span></div>
+    <div class="stat-item">💎 АЛМАЗЫ <span id="diamonds">0</span></div>
+    <div class="stat-item">🌀 ПЛАЗМА <span id="plasma">0</span></div>
 </div>
 
 <div id="tab-clicker" class="tab-content active">
-    <h2>Уровень: <span id="lvl">1</span></h2>
-    <div id="click-circle">🖱</div>
-    <p>Сила клика: <span id="power">1</span></p>
-</div>
-
-<div id="tab-shop" class="tab-content">
-    <h2>Магазин кейсов (25 шт)</h2>
-    <div class="case-grid" id="shop-items">
-        </div>
-</div>
-
-<div id="tab-profile" class="tab-content">
-    <h2>👤 Твой прогресс</h2>
-    <div style="text-align: left; background: #333; padding: 20px; border-radius: 15px;">
-        <p>📊 Всего кликов: <span id="stat-clicks">0</span></p>
-        <p>🐾 Питомцев: <span id="stat-pets">0</span></p>
-        <p>🤖 Автокликер: <span id="stat-auto">Выкл</span></p>
+    <div class="clicker-container">
+        <h2 style="margin-top: 0;">Уровень <span id="lvl">1</span></h2>
+        <div id="click-circle">🔥</div>
+        <p style="color: #888;">Сила клика: <span id="power">1</span></p>
     </div>
 </div>
 
-<div id="drop-modal">
-    <h3>🎉 ВАМ ВЫПАЛО:</h3>
-    <h1 id="drop-name">...</h1>
-    <button onclick="document.getElementById('drop-modal').style.display='none'">ЗАБРАТЬ</button>
+<div id="tab-cases" class="tab-content">
+    <h2 style="text-align: center;">Магазин Кейсов</h2>
+    <div class="case-grid">
+        <div class="case-card">
+            <span class="case-img">📦</span>
+            <b>Бронзовый</b>
+            <small>Цена: 100 💰</small>
+            <button onclick="buyCase(100, 'Бронзовый')">ОТКРЫТЬ</button>
+        </div>
+        <div class="case-card">
+            <span class="case-img">🎁</span>
+            <b>Серебряный</b>
+            <small>Цена: 500 💰</small>
+            <button onclick="buyCase(500, 'Серебряный')">ОТКРЫТЬ</button>
+        </div>
+        <div class="case-card">
+            <span class="case-img">💎</span>
+            <b>Золотой</b>
+            <small>Цена: 2500 💰</small>
+            <button onclick="buyCase(2500, 'Золотой')">ОТКРЫТЬ</button>
+        </div>
+        <div class="case-card">
+            <span class="case-img">👑</span>
+            <b>Королевский</b>
+            <small>Цена: 10000 💰</small>
+            <button onclick="buyCase(10000, 'Королевский')">ОТКРЫТЬ</button>
+        </div>
+    </div>
+</div>
+
+<div id="tab-top" class="tab-content">
+    <h2 style="text-align: center;">🏆 ТОП ИГРОКОВ</h2>
+    <div class="top-list">
+        <div class="top-item"><span><span class="rank">#1</span> Gleb (Ты)</span> <span>70 💰</span></div>
+        <div class="top-item"><span><span class="rank">#2</span> Alex Bot</span> <span>50 💰</span></div>
+        <div class="top-item"><span><span class="rank">#3</span> CryptoKing</span> <span>25 💰</span></div>
+    </div>
+    <button onclick="saveToBot()" style="width:100%; margin-top:20px; padding:15px; border-radius:10px; background:#4caf50; border:none; color:white; font-weight:bold;">💾 СОХРАНИТЬ ПРОГРЕСС</button>
 </div>
 
 <div class="navbar">
-    <div class="nav-item" onclick="openTab('clicker')">🔘<br>КЛИКЕР</div>
-    <div class="nav-item" onclick="openTab('shop')">🎁<br>КЕЙСЫ</div>
-    <div class="nav-item" onclick="openTab('profile')">👤<br>ИНФО</div>
+    <div class="nav-btn active-nav" onclick="openTab('clicker', this)">🔘<br>КЛИК</div>
+    <div class="nav-btn" onclick="openTab('cases', this)">🎁<br>КЕЙСЫ</div>
+    <div class="nav-btn" onclick="openTab('top', this)">🏆<br>ТОП</div>
 </div>
 
 <script>
-    let stats = { coins: 0, diamonds: 0, plasma: 0, power: 1, lvl: 1, pets: 0 };
+    let tg = window.Telegram.WebApp;
+    tg.expand();
 
-    // Функция клика
-    document.getElementById('click-circle').onclick = () => {
+    let stats = { coins: 0, diamonds: 0, plasma: 0, power: 1, lvl: 1 };
+
+    function clickBtn(e) {
         stats.coins += stats.power;
         updateUI();
-        createParticle(); // Можно добавить эффект вылетающих цифр
-    };
+        showPlusOne(e);
+        tg.HapticFeedback.impactOccurred('light'); // Вибрация при клике
+    }
+
+    document.getElementById('click-circle').addEventListener('touchstart', function(e) {
+        clickBtn(e.touches[0]);
+    });
+
+    function showPlusOne(e) {
+        const floating = document.createElement('div');
+        floating.className = 'floating-text';
+        floating.innerText = '+' + stats.power;
+        floating.style.left = e.clientX + 'px';
+        floating.style.top = e.clientY + 'px';
+        document.body.appendChild(floating);
+        setTimeout(() => floating.remove(), 600);
+    }
 
     function updateUI() {
         document.getElementById('coins').innerText = stats.coins;
         document.getElementById('diamonds').innerText = stats.diamonds;
         document.getElementById('plasma').innerText = stats.plasma;
-        document.getElementById('lvl').innerText = stats.lvl;
-        document.getElementById('power').innerText = stats.power;
-        document.getElementById('stat-pets').innerText = stats.pets;
     }
 
-    function openTab(tabName) {
+    function openTab(name, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.getElementById('tab-' + tabName).classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
+        document.getElementById('tab-' + name).classList.add('active');
+        el.classList.add('active-nav');
     }
 
-    // Генерация 25 кейсов
-    const shopItems = document.getElementById('shop-items');
-    for(let i=1; i<=25; i++) {
-        let price = i * 100;
-        let card = document.createElement('div');
-        card.className = 'case-card';
-        card.innerHTML = `
-            <b>Кейс №${i}</b><br>
-            <small>Цена: ${price} 💰</small>
-            <button onclick="buyCase(${price}, ${i})">ОТКРЫТЬ</button>
-        `;
-        shopItems.appendChild(card);
-    }
-
-    function buyCase(price, id) {
+    function buyCase(price, name) {
         if(stats.coins >= price) {
             stats.coins -= price;
-            openCase(id);
             updateUI();
+            alert("Вы открыли " + name + "! (Призы добавятся в следующем обновлении)");
         } else {
-            alert("Недостаточно монет!");
+            tg.showAlert("Недостаточно монет!");
         }
     }
 
-    function openCase(id) {
-        const modal = document.getElementById('drop-modal');
-        const dropText = document.getElementById('drop-name');
-        
-        let luck = Math.random();
-        let prize = "";
-
-        if(luck < 0.1) {
-            stats.diamonds += 1;
-            prize = "1 Алмаз! 💎";
-        } else if (luck < 0.3) {
-            stats.power += 2;
-            prize = "+2 к Силе! ⚡";
-        } else {
-            stats.coins += Math.floor(price * 1.5);
-            prize = "Кешбэк монет!";
-        }
-
-        dropText.innerText = prize;
-        modal.style.display = 'block';
+    function saveToBot() {
+        tg.sendData(JSON.stringify(stats));
     }
 </script>
-
 </body>
 </html>
-
